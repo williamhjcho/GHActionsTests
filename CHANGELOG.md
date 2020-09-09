@@ -1,3 +1,5 @@
+## 0.0.3
+
 ## 0.0.1 (14-03-2019)
 
 - Something happened here
