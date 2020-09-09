@@ -5,44 +5,64 @@ name: release
 on:
   pull_request:
     branches: [ master ]
-    types: [ closed ]
+    # types: [ closed ]
 
 jobs:
-  release:
-    if: github.event.pull_request.merged
+  verify:
+    # if: github.event.pull_request.merged
     runs-on: ubuntu-latest
 
     env:
-      RELEASE_BRANCH: 'release'
       # matches 'Release "x.y.z"', the lookarounds are used as anchors
       # the release version will be the one matched inside the first double quoted section
       RELEASE_TITLE_PATTERN: '(?<=^Release ")(.+?)(?=")'
 
+    outputs:
+      release-name: ${{ steps.get-release-name.outputs.name }}
+
+    steps:
+      # - uses: actions/checkout@v2
+      - name: Get release name
+        id: get-release-name
+        run: |
+          RELEASE_NAME=$(echo '${{ github.event.pull_request.title }}' | grep -ioP --max-count=1 '${{ env.RELEASE_TITLE_PATTERN }}')
+          echo $RELEASE_NAME
+          echo "::set-output name=name::$RELEASE_NAME"
+
+  release:
+    needs: [ verify ]
+    runs-on: ubuntu-latest
+
+    env:
+      RELEASE_BRANCH: 'release'
+      RELEASE_NAME: ${{ needs.verify.outputs.release-name }}
+
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get release name
+      - name: Check step
         run: |
-          RELEASE_NAME=$(echo '${{ github.event.pull_request.title }}' | grep -ioP --max-count=1 '${{ env.RELEASE_TITLE_PATTERN }}')
-          echo "::set-env name=RELEASE_NAME::$RELEASE_NAME"
+          echo "rel $RELEASE_NAME"
+          echo "rel ${{ env.RELEASE_NAME }}"
+          echo "rel ${{ needs.verify.outputs.release-name }}"
 
-      - name: Merge to release branch
-        uses: everlytic/branch-merge@1.1.0
-        with:
-          github_token: ${{ github.token }}
-          source_ref: ${{ github.sha }}
-          target_branch: ${{ env.RELEASE_BRANCH }}
-          commit_message_template: '[Automated] Release "${{ env.RELEASE_NAME }}"'
+      # - name: Merge to release branch
+      #   uses: everlytic/branch-merge@1.1.0
+      #   with:
+      #     github_token: ${{ github.token }}
+      #     source_ref: ${{ github.sha }}
+      #     target_branch: ${{ env.RELEASE_BRANCH }}
+      #     commit_message_template: '[Automated] Release "${{ env.RELEASE_NAME }}"'
 
-      - name: Generate new release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.RELEASE_NAME }}
-          release_name: 'Release "${{ env.RELEASE_NAME }}"'
-          body: ${{ github.event.pull_request.body }}
-          # TODO: use the release branch commit SHA rather than the branch itself
-          commitish: ${{ env.RELEASE_BRANCH }}
-          draft: true
-          prerelease: false
+      # - name: Generate new release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: ${{ env.RELEASE_NAME }}
+      #     release_name: 'Release "${{ env.RELEASE_NAME }}"'
+      #     body: ${{ github.event.pull_request.body }}
+      #     # TODO: use the release branch commit SHA rather than the branch itself
+      #     commitish: ${{ env.RELEASE_BRANCH }}
+      #     draft: false
+      #     prerelease: false
