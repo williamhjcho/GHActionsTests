@@ -32,7 +32,7 @@ jobs:
           github_token: ${{ github.token }}
           source_ref: ${{ github.sha }}
           target_branch: ${{ env.RELEASE_BRANCH }}
-          commit_message_template: '[Automated] Merges {source_ref} into target {target_branch}'
+          commit_message_template: '[Automated] Release "${{ env.RELEASE_NAME }}"'
 
       - name: Generate new release
         uses: actions/create-release@v1
@@ -40,7 +40,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ env.RELEASE_NAME }}
-          release_name: 'Release ${{ env.RELEASE_NAME }}'
+          release_name: 'Release "${{ env.RELEASE_NAME }}"'
           body: ${{ github.event.pull_request.body }}
           # TODO: use the release branch commit SHA rather than the branch itself
           commitish: ${{ env.RELEASE_BRANCH }}
