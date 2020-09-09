@@ -41,10 +41,7 @@ jobs:
         with:
           tag_name: ${{ env.RELEASE_NAME }}
           release_name: 'Release ${{ env.RELEASE_NAME }}'
-          body: |
-            Changes in this Release
-            - First Change
-            - Second Change
+          body: ${{ github.event.pull_request.body }}
           # TODO: use the release branch commit SHA rather than the branch itself
           commitish: ${{ env.RELEASE_BRANCH }}
           draft: true
