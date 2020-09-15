@@ -60,14 +60,21 @@ jobs:
           # base: ${{ env.RELEASE_BRANCH }}
           # commit_message: '[Automated] Release "${{ env.RELEASE_NAME }}"'
           script: |
-            return await github.repos.getLatestRelease({
+            console.log(`${{ github.sha }}`);
+            console.log(`${{ env.RELEASE_BRANCH }} ${{ env.RELEASE_NAME }}`);
+
+            const commit = await github.repos.getLatestRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
-
-      - name: Retrieve latest release
-        run: |
-          echo "${{steps.latest-release.outputs.result}}"
+            console.log(commit);
+            if (commit.status == 200) {
+              console.log(`Yep`);
+            } else {
+              console.log(`Nope`);
+            }
+            // TODO: merge
+            // TODO: release
 
       # - name: Merge to release branch
       #   uses: everlytic/branch-merge@1.1.0
