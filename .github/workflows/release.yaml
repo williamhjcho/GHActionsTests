@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [ master ]
     # types: [ closed ]
+    types: [ closed, edited, opened ]
 
 jobs:
   verify:
