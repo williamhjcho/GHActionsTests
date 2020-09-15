@@ -1,5 +1,9 @@
 # Generates a new release when a PR is merged at master
 # It detects a PR with title: 'Release "x.y.z"'
+#
+# References:
+# - contexts & expression syntax: https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#job-context
+# - github-script: https://github.com/marketplace/actions/github-script
 name: release
 
 on:
@@ -49,15 +53,21 @@ jobs:
 
       - name: My script action
         uses: actions/github-script@v3
+        id: latest-release
         with:
           github-token: ${{ github.token }}
           # head: ${{ github.sha }}
           # base: ${{ env.RELEASE_BRANCH }}
           # commit_message: '[Automated] Release "${{ env.RELEASE_NAME }}"'
           script: |
-            console.log(`${context.repo.owner}`);
-            console.log(`${context.repo.repo}`);
-            console.log(`${{ github.repository_owner }}`);
+            return await github.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+      - name: Retrieve latest release
+        run: |
+          echo "${{steps.latest-release.outputs.result}}"
 
       # - name: Merge to release branch
       #   uses: everlytic/branch-merge@1.1.0
