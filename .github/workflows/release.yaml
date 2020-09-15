@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ master ]
     # types: [ closed ]
-    types: [ closed, edited, opened ]
+    types: [ closed, edited, opened, reopened, synchronize ]
 
 jobs:
   verify:
@@ -45,7 +45,17 @@ jobs:
       - name: Dump
         run: |
           echo ">>$RELEASE_NAME<<"
-          echo "dart $CLI release generate $RELEASE_NAME ${{ github.sha }} --base $RELEASE_BRANCH"
+          echo "dart cli release generate $RELEASE_NAME ${{ github.sha }} --base $RELEASE_BRANCH"
+
+      - name: My local action
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ github.token }}
+          # head: ${{ github.sha }}
+          # base: ${{ env.RELEASE_BRANCH }}
+          # commit_message: '[Automated] Release "${{ env.RELEASE_NAME }}"'
+          script: |
+            console.log(`aaaaaa`);
 
       # - name: Merge to release branch
       #   uses: everlytic/branch-merge@1.1.0
