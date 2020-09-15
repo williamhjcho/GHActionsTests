@@ -47,7 +47,7 @@ jobs:
           echo ">>$RELEASE_NAME<<"
           echo "dart cli release generate $RELEASE_NAME ${{ github.sha }} --base $RELEASE_BRANCH"
 
-      - name: My local action
+      - name: My script action
         uses: actions/github-script@v3
         with:
           github-token: ${{ github.token }}
@@ -55,7 +55,9 @@ jobs:
           # base: ${{ env.RELEASE_BRANCH }}
           # commit_message: '[Automated] Release "${{ env.RELEASE_NAME }}"'
           script: |
-            console.log(`aaaaaa`);
+            console.log(`${context.repo.owner}`);
+            console.log(`${context.repo.repo}`);
+            console.log(`${{ github.repository_owner }}`);
 
       # - name: Merge to release branch
       #   uses: everlytic/branch-merge@1.1.0
