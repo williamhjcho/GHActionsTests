@@ -45,6 +45,7 @@ jobs:
       - name: Dump
         run: |
           echo ">>$RELEASE_NAME<<"
+          echo "dart $CLI release generate $RELEASE_NAME ${{ github.sha }} --base $RELEASE_BRANCH"
 
       # - name: Merge to release branch
       #   uses: everlytic/branch-merge@1.1.0
