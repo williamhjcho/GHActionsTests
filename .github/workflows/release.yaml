@@ -50,12 +50,12 @@ jobs:
         with:
           github-token: ${{ github.token }}
           script: |
-            console.log(`Merging "${{ github.sha }}" into "$${{ env.RELEASE_BRANCH }}"`)
+            console.log(`Merging "${{ github.sha }}" into "$${{ env.RELEASE_BRANCH }}"`);
             var result = await github.repos.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              base: ${{ env.RELEASE_BRANCH }},
-              head: ${{ github.sha }},
+              base: `${{ env.RELEASE_BRANCH }}`,
+              head: `${{ github.sha }}`,
               commit_message: `[Automated] Release "${{ env.RELEASE_NAME }}"`,
             });
 
