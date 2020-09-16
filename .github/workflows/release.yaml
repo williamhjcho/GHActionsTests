@@ -51,38 +51,40 @@ jobs:
           echo ">>$RELEASE_NAME<<"
           echo "dart cli release generate $RELEASE_NAME ${{ github.sha }} --base $RELEASE_BRANCH"
 
-      - name: My script action
+      - name: Merge
         uses: actions/github-script@v3
-        id: latest-release
+        id: merge
         with:
           github-token: ${{ github.token }}
-          # head: ${{ github.sha }}
-          # base: ${{ env.RELEASE_BRANCH }}
-          # commit_message: '[Automated] Release "${{ env.RELEASE_NAME }}"'
           script: |
-            console.log(`${{ github.sha }}`);
-            console.log(`${{ env.RELEASE_BRANCH }} ${{ env.RELEASE_NAME }}`);
-
-            const commit = await github.repos.getLatestRelease({
+            // merging
+            console.log(`Merging "${{ github.sha }}" into "$${{ env.RELEASE_BRANCH }}"`)
+            //const result = await github.repos.merge({
+            //  owner: context.repo.owner,
+            //  repo: context.repo.repo,
+            //  base: ${{ env.RELEASE_BRANCH }},
+            //  head: ${{ github.sha }},
+            //  commit_message: `[Automated] Release "${{ env.RELEASE_NAME }}"`,
+            //});
+            const result = await github.repos.getLatestRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
-            console.log(commit);
-            if (commit.status == 200) {
-              console.log(`Yep`);
-            } else {
-              console.log(`Nope`);
-            }
-            // TODO: merge
-            // TODO: release
 
-      # - name: Merge to release branch
-      #   uses: everlytic/branch-merge@1.1.0
-      #   with:
-      #     github_token: ${{ github.token }}
-      #     source_ref: ${{ github.sha }}
-      #     target_branch: ${{ env.RELEASE_BRANCH }}
-      #     commit_message_template: '[Automated] Release "${{ env.RELEASE_NAME }}"'
+            if (result.status == 200) {
+              console.log(`Merged ${result.data.sha}`)
+              core.setOutput('merge_commit', result.data);
+            } else {
+              core.setFailed('Merging failed:\n${result.data.message}');
+            }
+
+      - name: Generate new release
+        uses: actions/github-script@v3
+        id: release
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            console.log(`${{ steps.merge.outputs.merge_commit.tag_name }}`);
 
       # - name: Generate new release
       #   uses: actions/create-release@v1
