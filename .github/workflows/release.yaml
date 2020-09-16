@@ -72,7 +72,7 @@ jobs:
               repo: context.repo.repo,
               tag_name: `${{ env.RELEASE_NAME }}`,
               name: `Release "${{ env.RELEASE_NAME }}"`,
-              body: `${{ github.event.pull_request.body }}`
+              body: `${{ github.event.pull_request.body }}`,
               target_commitish: mergeCommit.sha,
               draft: true,
             });
