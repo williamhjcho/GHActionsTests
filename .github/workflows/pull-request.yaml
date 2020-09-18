@@ -12,6 +12,7 @@ jobs:
       matrix: ${{ steps.get-paths.outputs.matrix }}
     steps:
       - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v1.3.0
       - name: Get paths
         id: get-paths
         run: |
