@@ -9,14 +9,15 @@ jobs:
   generate-matrix:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ""
+      matrix: ${{ steps.get-paths.outputs.matrix }}
     steps:
       - uses: actions/checkout@v2
       - name: Get paths
+        id: get-paths
         run: |
           echo "::set-output name=matrix::{\"paths\":[\"packages/utils\",\"packages/stuff\"]}"
 
-  test:
+  validate-paths:
     runs-on: ubuntu-latest
     needs: [ generate-matrix ]
     strategy:
