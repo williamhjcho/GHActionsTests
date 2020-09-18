@@ -15,7 +15,7 @@ jobs:
       - name: Get paths
         id: get-paths
         run: |
-          echo "::set-output name=matrix::{\"paths\":[\"packages/utils\",\"packages/stuff\"]}"
+          echo "::set-output name=matrix::{\"path\":[\"packages/utils\",\"packages/stuff\"]}"
 
   validate-paths:
     runs-on: ubuntu-latest
@@ -25,6 +25,7 @@ jobs:
       matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
       fail-fast: true
     steps:
+      - uses: subosito/flutter-action@v1.3.0
       - run: |
           cd ${{ matrix.path }}
           echo "$(pwd)"
