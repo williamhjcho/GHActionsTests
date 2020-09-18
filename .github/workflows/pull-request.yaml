@@ -1,0 +1,38 @@
+name: pull-request
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ""
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get paths
+        run: |
+          echo "::set-output name=matrix::{\"paths\":[\"packages/utils\",\"packages/stuff\"]}"
+
+  test:
+    runs-on: ubuntu-latest
+    needs: [ generate-matrix ]
+    strategy:
+      # fromJson
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      fail-fast: true
+    steps:
+      - run: cd ${{ matrix.path }}
+      - name: Install dependencies
+        run: flutter packages get
+      - name: Validate Format
+        run: flutter format --set-exit-if-changed lib test
+      - name: Analyze
+        run: flutter analyze --no-pub
+      - name: Run tests
+        run: flutter test --no-pub --coverage --test-randomize-ordering-seed random
+      # TODO: add code cov
+      #- name: Upload coverage to Codecov
+      #  uses: codecov/codecov-action@v1
