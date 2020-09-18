@@ -26,6 +26,11 @@ jobs:
       fail-fast: true
     steps:
       - uses: subosito/flutter-action@v1.3.0
+        with:
+          channel: stable
+      - run: |
+          echo "$(pwd)"
+          echo "$(ls)"
       - run: |
           cd ${{ matrix.path }}
           echo "$(pwd)"
