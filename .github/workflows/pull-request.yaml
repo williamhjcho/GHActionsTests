@@ -17,7 +17,12 @@ jobs:
       - name: Get paths
         id: get-paths
         run: |
-          echo "::set-output name=matrix::{\"path\":[\"packages/utils\",\"packages/stuff\"]}"
+          PUBSPEC_PATHS="$(find . -type f -name "pubspec.yaml" \
+            | xargs -I ^ sh -c "echo ^" \
+            | sed 's/pubspec.yaml//' \
+            | jq -Rsc 'split("\n")[:-1]')"
+          echo "$PUBSPEC_PATHS"
+          echo "::set-output name=matrix::{\"path\":$PUBSPEC_PATHS}"
 
   validate-paths:
     runs-on: ubuntu-latest
