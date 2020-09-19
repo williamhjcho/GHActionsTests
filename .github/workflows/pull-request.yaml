@@ -6,6 +6,8 @@ on:
       - master
 
 jobs:
+  # Gets all pubspec location paths and puts them into the matrix output
+  # to be used by the next step in parallel
   generate-matrix:
     runs-on: ubuntu-latest
     outputs:
@@ -21,19 +23,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ generate-matrix ]
     strategy:
-      # fromJson
       matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
       fail-fast: true
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
     steps:
+      - uses: actions/checkout@v2
       - uses: subosito/flutter-action@v1.3.0
         with:
           channel: stable
-      - run: |
-          echo "$(pwd)"
-          echo "$(ls)"
-      - run: |
-          cd ${{ matrix.path }}
-          echo "$(pwd)"
       - name: Install dependencies
         run: flutter packages get
       - name: Validate Format
