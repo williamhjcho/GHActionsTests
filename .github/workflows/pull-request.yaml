@@ -1,0 +1,51 @@
+name: pull-request
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  # Gets all pubspec location paths and puts them into the matrix output
+  # to be used by the next step in parallel
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.get-paths.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get paths
+        id: get-paths
+        run: |
+          PUBSPEC_PATHS="$(find . -type f -name "pubspec.yaml" \
+            | xargs -I ^ sh -c "echo ^" \
+            | sed 's/pubspec.yaml//' \
+            | jq -Rsc 'split("\n")[:-1]')"
+          echo "$PUBSPEC_PATHS"
+          echo "::set-output name=matrix::{\"path\":$PUBSPEC_PATHS}"
+
+  validate-paths:
+    runs-on: ubuntu-latest
+    needs: [ generate-matrix ]
+    strategy:
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      fail-fast: true
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v1.3.0
+        with:
+          channel: stable
+      - name: Install dependencies
+        run: flutter packages get
+      - name: Validate Format
+        run: flutter format --set-exit-if-changed lib test
+      - name: Analyze
+        run: flutter analyze --no-pub
+      - name: Run tests
+        run: flutter test --no-pub --coverage --test-randomize-ordering-seed random
+      # TODO: add code cov
+      #- name: Upload coverage to Codecov
+      #  uses: codecov/codecov-action@v1
