@@ -1,0 +1,31 @@
+name: Stuff
+
+on:
+  push:
+    branches:
+      - testing-workflows
+  # pull_request:
+  #   branches: [ "master" ]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup pipelines
+        id: set-matrix
+        run: |
+          if [[ "ios" == "all" ]]; then
+            echo "all conditions!"
+            echo "env=['prod','staging']" >> $GITHUB_OUTPUT
+          else
+            echo "individual condition"
+            echo "env=['ios']" >> $GITHUB_OUTPUT
+          fi
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: "zulu"
+          java-version: "13.x"
+    outputs:
+      env: ${{ steps.set-matrix.outputs.env }}
