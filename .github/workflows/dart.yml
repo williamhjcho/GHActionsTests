@@ -17,6 +17,8 @@ jobs:
         uses: cycjimmy/semantic-release-action@v3
         with:
           semantic_version: 19.0.5
+          branches: |
+            ['main','master','testing-workflows']
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Convert release changelog markdown to Slack markdown
