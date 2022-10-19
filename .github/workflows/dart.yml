@@ -17,10 +17,17 @@ jobs:
         uses: cycjimmy/semantic-release-action@v3
         with:
           semantic_version: 19.0.5
+          dry_run: true
           branches: |
             ['main','master','testing-workflows']
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check if released
+        run: |
+          if [ "${{ new_release_published }}" != "true" ]; then
+            echo "Not released"
+            exit 1
+          fi
       - name: Convert release changelog markdown to Slack markdown
         id: slack_markdown
         uses: LoveToKnow/slackify-markdown-action@v1.0.0
@@ -31,8 +38,7 @@ jobs:
           ENVIRONMENT="${{ github.event.inputs.environment }}"
           PLATFORMS="${{ github.event.inputs.platforms }}"
           NEW_VERSION="${{ steps.semantic_version.outputs.new_release_version }}"
-          # CHANGELOG=${{ toJSON(steps.semantic_version.outputs.new_release_notes) }}
-          CHANGELOG="${{ steps.slack_markdown.outputs.text }}"
+          CHANGELOG=${{ steps.slack_markdown.outputs.text }}
           HEADER="Releasing :rocket: v$NEW_VERSION"
 
           cat > .slack_notification.json <<EOL
