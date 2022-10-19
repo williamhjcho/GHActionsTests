@@ -24,7 +24,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Check if released
         run: |
-          if [ "${{ new_release_published }}" != "true" ]; then
+          if [ "${{ steps.semantic_version.outputs.new_release_published }}" != "true" ]; then
             echo "Not released"
             exit 1
           fi
