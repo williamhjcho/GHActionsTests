@@ -12,20 +12,88 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Setup pipelines
-        id: set-matrix
-        run: |
-          if [[ "ios" == "all" ]]; then
-            echo "all conditions!"
-            echo "env=['prod','staging']" >> $GITHUB_OUTPUT
-          else
-            echo "individual condition"
-            echo "env=['ios']" >> $GITHUB_OUTPUT
-          fi
-      - name: Setup JDK
-        uses: actions/setup-java@v3
+      - name: Semantic Version Github Release
+        id: semantic_version
+        uses: cycjimmy/semantic-release-action@v3
         with:
-          distribution: "zulu"
-          java-version: "13.x"
-    outputs:
-      env: ${{ steps.set-matrix.outputs.env }}
+          semantic_version: 19.0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Convert release changelog markdown to Slack markdown
+        id: slack_markdown
+        uses: LoveToKnow/slackify-markdown-action@v1.0.0
+        with:
+          text: ${{ toJSON(steps.semantic_version.outputs.new_release_notes) }}
+      - name: Build Slack notification
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment }}"
+          PLATFORMS="${{ github.event.inputs.platforms }}"
+          NEW_VERSION="${{ steps.semantic_version.outputs.new_release_version }}"
+          # CHANGELOG=${{ toJSON(steps.semantic_version.outputs.new_release_notes) }}
+          CHANGELOG="${{ steps.slack_markdown.outputs.text }}"
+          HEADER="Releasing :rocket: v$NEW_VERSION"
+
+          cat > .slack_notification.json <<EOL
+          {
+            "text": "$HEADER",
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "emoji": true,
+                  "text": "$HEADER"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "Environment(s): *${ENVIRONMENT}*"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "Platform(s): *${PLATFORMS}*"
+                  }
+                ]
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "$CHANGELOG"
+                }
+              },
+              {
+                "type": "divider"
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "${{ env.GITHUB_RUN_URL }}"
+                }
+              },
+              {
+                "type": "context",
+                "elements": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "${{ github.ref_name }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "${{ github.sha }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "triggered by *${{ github.actor }}*"
+                  }
+                ]
+              }
+            ]
+          }
+          EOL
+      - name: Check notification
+        run: cat .slack_notification.json | jq
