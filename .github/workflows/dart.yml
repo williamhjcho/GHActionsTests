@@ -28,18 +28,29 @@ jobs:
             echo "Not released"
             exit 1
           fi
-      - name: Convert release changelog markdown to Slack markdown
-        id: slack_markdown
-        uses: LoveToKnow/slackify-markdown-action@v1.0.0
-        with:
-          text: ${{ toJSON(steps.semantic_version.outputs.new_release_notes) }}
+      # - name: Convert release changelog markdown to Slack markdown
+      #   id: slack_markdown
+      #   uses: LoveToKnow/slackify-markdown-action@v1.0.0
+      #   with:
+      #     text: ${{ toJSON(steps.semantic_version.outputs.new_release_notes) }}
       - name: Build Slack notification
         run: |
+          set -euo pipefail
           ENVIRONMENT="${{ github.event.inputs.environment }}"
           PLATFORMS="${{ github.event.inputs.platforms }}"
           NEW_VERSION="${{ steps.semantic_version.outputs.new_release_version }}"
-          CHANGELOG=${{ steps.slack_markdown.outputs.text }}
           HEADER="Releasing :rocket: v$NEW_VERSION"
+
+          cat > og <<EOL
+          ${{ steps.semantic_version.outputs.new_release_notes }}
+
+          "and some double" and 'single' quotes here
+          EOL
+          cat og
+          echo "------"
+
+          CHANGELOG=$(cat og | jq --raw-input --slurp)
+          echo ">>>$CHANGELOG<<<"
 
           cat > .slack_notification.json <<EOL
           {
@@ -70,7 +81,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "$CHANGELOG"
+                  "text": $CHANGELOG
                 }
               },
               {
@@ -104,4 +115,7 @@ jobs:
           }
           EOL
       - name: Check notification
-        run: cat .slack_notification.json | jq
+        run: |
+          set -euo pipefail
+
+          cat .slack_notification.json | jq
