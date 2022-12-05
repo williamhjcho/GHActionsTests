@@ -1,0 +1,73 @@
+name: L10n Sync
+on:
+  repository_dispatch:
+    types:
+      # add or remove the events from phrase that we want to filter
+      - 'keys:delete'
+      - 'keys:batch_delete'
+      - 'translations:update'
+      - 'jobs:complete'
+      - 'jobs:locale:complete'
+      - 'test:event'
+  workflow_dispatch:
+
+env:
+  FASTLANE_HIDE_CHANGELOG: true
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    env:
+      BRANCH_NAME: "test-auto-pr-branch"
+      COMMIT_MESSAGE: "fix: Update l10n file(s)"
+    steps:
+      - uses: actions/checkout@v3
+#      - name: Setup environment
+#        run: |
+#          echo "FLUTTER_CHANNEL=beta" >> $GITHUB_ENV
+#      - uses: dart-lang/setup-dart@v1.3
+#        with:
+#          sdk: "${{ env.FLUTTER_CHANNEL }}"
+      - run: |
+          echo "passed ${{ !github.event.client_payload.passed }}";
+          echo "payload: $CLIENT_PAYLOAD"
+        env:
+          CLIENT_PAYLOAD: ${{ toJSON(github.event.client_payload) }}
+      - name: Sync l10n files
+        run: |
+          echo "simulating 'make l10n-pull'"
+          mkdir -p l10n/en-US
+          date >> l10n/en-US/out.json
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          title: "Sync l10n files"
+          body: |
+            Auto generated l10n sync
+          branch: "${{ env.BRANCH_NAME }}"
+          commit-message: "${{ env.COMMIT_MESSAGE }}"
+          delete-branch: true
+#      - uses: stefanzweifel/git-auto-commit-action@v4
+#        with:
+#          commit_message: "${{ env.COMMIT_MESSAGE }}"
+#          branch: "${{ env.BRANCH_NAME }}"
+#          create_branch: true
+#          commit_user_name: My GitHub Actions Bot
+#          commit_user_email: test-github-actions-bot@sproutfi.com
+#          commit_author: Author <actions@github.com> # defaults to author of the commit that triggered the run
+#          commit_options: '--no-verify --signoff'
+          #status_options: '--untracked-files=no'
+#          file_pattern: 'l10n/**/*.json'
+          #repository: .
+          #file_pattern: '*.php src/*.js tests/*.js'
+          #tagging_message: 'v1.0.0'
+          #add_options: '-u'
+          #push_options: '--force'
+          #skip_dirty_check: true
+          #skip_fetch: true
+          #skip_checkout: true
+          #disable_globbing: true
