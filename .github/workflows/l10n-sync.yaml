@@ -1,0 +1,50 @@
+name: L10n Sync
+on:
+  repository_dispatch:
+    types:
+      # add or remove the events from phrase that we want to filter
+      - 'keys:delete'
+      - 'keys:batch_delete'
+      - 'translations:update'
+      - 'jobs:complete'
+      - 'jobs:locale:complete'
+      - 'test:event'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync-l10n:
+    runs-on: ubuntu-latest
+    env:
+      BRANCH_NAME: "auto-l10n-sync"
+      COMMIT_MESSAGE: "fix: Update l10n file(s)"
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup environment
+        run: |
+          #echo "FLUTTER_CHANNEL=beta" >> $GITHUB_ENV
+          echo "FLUTTER_CHANNEL=2.19.0-444.1.beta" >> $GITHUB_ENV
+      - uses: dart-lang/setup-dart@v1.3
+        with:
+          sdk: ${{ env.FLUTTER_CHANNEL }}
+      - name: Check payload
+        run: |
+          echo "Payload received"
+          echo "${{ toJSON(github.event.client_payload) }}"
+      - name: Sync l10n files
+        run: |
+          echo "simulating 'make l10n-pull'"
+          mkdir -p l10n/en-US
+          date >> l10n/en-US/out.json
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          title: "Sync l10n files"
+          body: |
+            Auto generated l10n sync
+          branch: "${{ env.BRANCH_NAME }}"
+          commit-message: "${{ env.COMMIT_MESSAGE }}"
+          delete-branch: true
