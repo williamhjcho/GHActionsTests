@@ -11,8 +11,38 @@ on:
     branches: [ master ]
     types: [ closed ]
 
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "The flavor/scheme used (all*|staging|prod)"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - staging
+          - prod
+      platforms:
+        description: "Which platforms (all*|android|ios)"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - android
+          - ios
+      bump_type:
+        description: "Which bump type (patch*|minor|major)"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
 jobs:
-  verify:
+  setup:
     if: github.event.pull_request.merged
     runs-on: ubuntu-latest
 
@@ -23,6 +53,8 @@ jobs:
 
     outputs:
       release-name: ${{ steps.get-release-name.outputs.name }}
+      environments: ${{ steps.set-matrix.environments }}
+      platforms: ${{ steps.set-matrix.platforms }}
 
     steps:
       # doing a perl-style regex match on the pull request's title
@@ -32,19 +64,58 @@ jobs:
         run: |
           RELEASE_NAME=$(echo '${{ github.event.pull_request.title }}' | grep -ioP --max-count=1 '${{ env.RELEASE_TITLE_PATTERN }}' || echo '')
           echo "::set-output name=name::$RELEASE_NAME"
+      - name: Setup environments
+        id: set-matrix
+        run: |
+          if [[ "${{ github.event.inputs.environment }}" == "all" || "${{ github.event.schedule }}" == "05 19 * * WED" ]]; then
+            echo "environments=['prod','staging']" >> $GITHUB_OUTPUT
+          else
+            echo "environments=['${{ github.event.inputs.environment }}']" >> $GITHUB_OUTPUT
+          fi
+          
+          if [[ "${{ github.event.inputs.platforms }}" == "all" || "${{ github.event.schedule }}" == "05 19 * * WED" ]]; then
+            echo "platforms=['ios','android']" >> $GITHUB_OUTPUT
+          else
+            echo "platforms=['${{ github.event.inputs.platforms }}']" >> $GITHUB_OUTPUT
+          fi
+
+  release-ios:
+    needs: [ setup ]
+    runs-on: ubuntu-latest
+    if: contains(needs.setup.outputs.platforms, 'ios')
+    strategy:
+      matrix:
+        environment: ${{ fromJSON(needs.setup.outputs.environments) }}
+
+    steps:
+      - name: Check
+        run: echo "ENVIRONMENT=${{ matrix.environment }} and PLATFORM=${{ matrix.platform }}"
+
+  release-android:
+    needs: [ setup ]
+    runs-on: ubuntu-latest
+    if: contains(needs.setup.outputs.platforms, 'android')
+    strategy:
+      matrix:
+        environment: ${{ fromJSON(needs.setup.outputs.environments) }}
+
+    steps:
+      - name: Check
+        run: echo "ENVIRONMENT=${{ matrix.environment }} and PLATFORM=${{ matrix.platform }}"
+
 
   release:
-    needs: [ verify ]
+    needs: [ setup ]
     runs-on: ubuntu-latest
-    if: ${{ needs.verify.outputs.release-name != '' }}
+#    if: ${{ needs.setup.outputs.release-name != '' }}
+    if: false
 
     env:
       RELEASE_BRANCH: 'release'
-      RELEASE_NAME: ${{ needs.verify.outputs.release-name }}
+      RELEASE_NAME: ${{ needs.setup.outputs.release-name }}
 
     steps:
       - uses: actions/checkout@v2
-
       - name: Merge & Release
         uses: actions/github-script@v3
         with:
