@@ -43,7 +43,7 @@ on:
 
 jobs:
   setup:
-    if: github.event.pull_request.merged
+#    if: github.event.pull_request.merged
     runs-on: ubuntu-latest
 
     env:
@@ -53,8 +53,8 @@ jobs:
 
     outputs:
       release-name: ${{ steps.get-release-name.outputs.name }}
-      environments: ${{ steps.set-matrix.environments }}
-      platforms: ${{ steps.set-matrix.platforms }}
+      environments: ${{ steps.set-matrix.outputs.environments }}
+      platforms: ${{ steps.set-matrix.outputs.platforms }}
 
     steps:
       # doing a perl-style regex match on the pull request's title
@@ -78,27 +78,31 @@ jobs:
           else
             echo "platforms=['${{ github.event.inputs.platforms }}']" >> $GITHUB_OUTPUT
           fi
+      - name: Print
+        run: |
+          echo "environments='${{ steps.set-matrix.outputs.environments }}'"
+          echo "platforms='${{ steps.set-matrix.outputs.platforms }}'"
 
-  release-ios:
+  release-apple:
     needs: [ setup ]
     runs-on: ubuntu-latest
     if: contains(needs.setup.outputs.platforms, 'ios')
     strategy:
       matrix:
         environment: ${{ fromJSON(needs.setup.outputs.environments) }}
-
+        platform: [ 'ios' ]
     steps:
       - name: Check
         run: echo "ENVIRONMENT=${{ matrix.environment }} and PLATFORM=${{ matrix.platform }}"
 
-  release-android:
+  release-google:
     needs: [ setup ]
     runs-on: ubuntu-latest
     if: contains(needs.setup.outputs.platforms, 'android')
     strategy:
       matrix:
         environment: ${{ fromJSON(needs.setup.outputs.environments) }}
-
+        platform: [ 'android' ]
     steps:
       - name: Check
         run: echo "ENVIRONMENT=${{ matrix.environment }} and PLATFORM=${{ matrix.platform }}"
