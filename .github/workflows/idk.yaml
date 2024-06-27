@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  # push:
+  #   branches:
+  #     - master
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "The flavor/scheme used (staging*|prod)"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - staging
+          - prod
+      sha:
+        description: "Commit SHA (7 first digits)"
+        required: false
+        type: string
+# env:
+#   ENVIRON: ${{ inputs.environment || 'staging' }}
+#   SSHA: ${{ inputs.sha || github.sha }}
+
+concurrency:
+  group: release-${{ inputs.environment || 'staging' }}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup environments
+        run: |
+          echo ">>> fallback=${{ inputs.environment || 'staging' }}"
+          ENVIRONMENT="${{ inputs.environment }}"
+          ENVIRONMENT="${ENVIRONMENT:-staging}"
+
+          SHORT_SHA="${{ inputs.sha }}"
+          SHORT_SHA="${SHORT_SHA:-${{ github.sha }}}"
+          SHORT_SHA=$(echo "$SHORT_SHA" | cut -c1-7)
+
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+
+  release:
+    name: "Release"
+    runs-on: ubuntu-latest
+    needs: [setup]
+    steps:
+      - name: Releasing
+        run: |
+          echo "Releasing ${{ env.ENVIRONMENT }} ${{ env.SHORT_SHA }}..."
