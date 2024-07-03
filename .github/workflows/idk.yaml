@@ -1,9 +1,10 @@
-name: Release
+name: "Release"
+run-name: "Release ${{ inputs.environment || 'staging' }} ${{ inputs.sha || github.sha }}"
 
 on:
-  # push:
-  #   branches:
-  #     - master
+  push:
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       environment:
@@ -42,11 +43,11 @@ jobs:
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
 
-  release:
-    name: "Release"
-    runs-on: ubuntu-latest
-    needs: [setup]
-    steps:
-      - name: Releasing
-        run: |
-          echo "Releasing ${{ env.ENVIRONMENT }} ${{ env.SHORT_SHA }}..."
+  # release:
+  #   name: "Release"
+  #   runs-on: ubuntu-latest
+  #   needs: [setup]
+  #   steps:
+  #     - name: Releasing
+  #       run: |
+  #         echo "Releasing ${{ env.ENVIRONMENT }} ${{ env.SHORT_SHA }}..."
